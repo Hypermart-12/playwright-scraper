@@ -1,0 +1,33 @@
+name: Run Playwright Scraper
+
+on:
+  workflow_dispatch:   # trigger manually
+  schedule:
+    - cron: '0 0 * * *'  # optional, daily at midnight UTC
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run scraper
+        run: node scrap.js
+
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        with:
+          name: scrape-results
+          path: output.json   # change to your output file
