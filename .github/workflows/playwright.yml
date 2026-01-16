@@ -1,44 +1,23 @@
 name: Run Playwright Scraper
-
 on:
-  workflow_dispatch:   # Trigger manually from GitHub Web UI
-  repository_dispatch: # Allows n8n to trigger this via API
-    types: [run-scraper]
-  schedule:
-    - cron: '0 0 * * *'  # Daily at midnight UTC
+  repository_dispatch:
+    types: [run-scraper] # This matches 'event_type' from n8n
+  workflow_dispatch:      # Allows you to also click the button manually
 
 jobs:
   playwright:
     runs-on: ubuntu-latest
-    timeout-minutes: 15  # Stops the job if it hangs for more than 15 mins
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4 # Updated from v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4 # Updated from v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-
-      - name: Run scraper
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Run Scraper
         run: node scrape.js
         env:
-          # Pass the URL from n8n if available
-         # This line checks 3 places for a URL:
-          # 1. Manual input from GitHub UI
-          # 2. Payload sent from n8n
-          # 3. A fallback default URL
-          TARGET_URL: ${{ github.event.inputs.url || github.event.client_payload.url || 'https://example.com' }}
+          # This grabs the URL from n8n's payload
+          TARGET_URL: ${{ github.event.client_payload.url || 'https://example.com' }}
+          # This grabs your Secret from GitHub settings
           N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
-          
-      - name: Upload results
-        uses: actions/upload-artifact@v4 # Updated from v3 to fix your error
-        with:
-          name: scrape-results
-          path: output.json
