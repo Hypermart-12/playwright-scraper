@@ -1,19 +1,21 @@
 name: Run Playwright Scraper
 
 on:
-  workflow_dispatch:   # trigger manually
+  workflow_dispatch:   # Trigger manually from GitHub Web UI
+  repository_dispatch: # Allows n8n to trigger this via API
+    types: [run-scraper]
   schedule:
-    - cron: '0 0 * * *'  # optional, daily at midnight UTC
+    - cron: '0 0 * * *'  # Daily at midnight UTC
 
 jobs:
   playwright:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Updated from v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4 # Updated from v3
         with:
           node-version: '20'
 
@@ -25,9 +27,13 @@ jobs:
 
       - name: Run scraper
         run: node scrap.js
+        env:
+          # Pass the URL from n8n if available
+          TARGET_URL: ${{ github.event.client_payload.url }}
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
 
       - name: Upload results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Updated from v3 to fix your error
         with:
           name: scrape-results
-          path: output.json   # change to your output file
+          path: output.json
