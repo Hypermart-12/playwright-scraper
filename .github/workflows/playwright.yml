@@ -26,7 +26,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run scraper
-        run: node scrap.js
+        run: node scrape.js
         env:
           # Pass the URL from n8n if available
           TARGET_URL: ${{ github.event.client_payload.url }}
