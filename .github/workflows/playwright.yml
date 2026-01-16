@@ -10,6 +10,7 @@ on:
 jobs:
   playwright:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Stops the job if it hangs for more than 15 mins
     steps:
       - name: Checkout code
         uses: actions/checkout@v4 # Updated from v3
