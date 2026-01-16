@@ -29,9 +29,13 @@ jobs:
         run: node scrape.js
         env:
           # Pass the URL from n8n if available
-          TARGET_URL: ${{ github.event.client_payload.url }}
+         # This line checks 3 places for a URL:
+          # 1. Manual input from GitHub UI
+          # 2. Payload sent from n8n
+          # 3. A fallback default URL
+          TARGET_URL: ${{ github.event.inputs.url || github.event.client_payload.url || 'https://example.com' }}
           N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
-
+          
       - name: Upload results
         uses: actions/upload-artifact@v4 # Updated from v3 to fix your error
         with:
