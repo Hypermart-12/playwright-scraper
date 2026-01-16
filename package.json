@@ -1,0 +1,8 @@
+{
+  "name": "playwright-scraper",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "playwright": "^1.41.0"
+  }
+}
