@@ -1,23 +1,42 @@
 name: Run Playwright Scraper
+
 on:
+  workflow_dispatch:
   repository_dispatch:
-    types: [run-scraper] # This matches 'event_type' from n8n
-  workflow_dispatch:      # Allows you to also click the button manually
+    types: [run-scraper]
 
 jobs:
-  playwright:
+  scrape:
     runs-on: ubuntu-latest
+    # Added permissions to allow the bot to "Push" the data.json back to your repo
+    permissions:
+      contents: write
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install
-      - run: npx playwright install --with-deps chromium
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Run Scraper
         run: node scrape.js
         env:
-          # This grabs the URL from n8n's payload
           TARGET_URL: ${{ github.event.client_payload.url || 'https://example.com' }}
-          # This grabs your Secret from GitHub settings
-          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+
+      - name: Commit and Push Results
+        run: |
+          git config --global user.name "Scraper Bot"
+          git config --global user.email "bot@example.com"
+          git add data.json
+          # This line prevents the error if the data hasn't changed
+          git commit -m "Update scrape results: $(date)" || echo "No changes to commit"
+          git push
