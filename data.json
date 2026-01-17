@@ -1,4 +1,6 @@
 {
-  "error": "Timeout or Bot Blocked",
-  "details": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('.item-name') to be visible\n"
+  "bundleName": "Cursed Dragon (Brainrot)",
+  "dateCreated": "Jan 02, 2026",
+  "dateUpdated": "Not Found",
+  "scrapedAt": "1/17/2026, 12:16:12 PM"
 }
