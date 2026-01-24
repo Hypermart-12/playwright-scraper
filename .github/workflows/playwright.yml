@@ -2,13 +2,9 @@ name: Run Playwright Scraper
 
 on:
   workflow_dispatch:
-    inputs:
-      target_url:
-        description: 'URL to scrape'
-        required: true
-        default: 'https://www.roblox.com/catalog'
   repository_dispatch:
     types: [run-scraper]
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
