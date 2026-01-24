@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       resumeUrl:
-        description: "n8n resume webhook (auto injected)"
+        description: "n8n resume webhook (auto-injected by n8n)"
         required: false
         type: string
 
@@ -27,33 +27,48 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (safe)
+        # using `npm install` instead of `npm ci` so missing package-lock.json won't fail
+        run: npm install
 
       - name: Install Playwright (Chromium)
         run: npx playwright install --with-deps chromium
 
       - name: Run scraper
+        # normal failure semantics so `failure()` steps will trigger correctly
         env:
           TARGET_URL: ${{ inputs.url }}
         run: |
-          echo "Scraping URL: $TARGET_URL"
+          echo "Scraping: $TARGET_URL"
+          # make sure your scrape.js uses process.env.TARGET_URL
           node scrape.js
 
-      - name: Commit and push results
+      - name: Commit and push results (runs always)
+        if: always()
         run: |
           git config user.name "Scraper Bot"
           git config user.email "bot@users.noreply.github.com"
+          # add data.json if it exists (won't fail)
           git add data.json || true
           git commit -m "Update scrape results $(date -u)" || echo "No changes to commit"
-          git push
+          # push using GITHUB_TOKEN (default) — ensure branch protection doesn't block this
+          git push || echo "Push failed (maybe branch protection)"
 
-      # 👇 THIS IS REQUIRED FOR "Dispatch and Wait for Completion"
+      - name: Upload debug screenshot (only on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-error
+          path: error-screenshot.png
+
+      # MUST call resumeUrl (or workflow will hang in n8n). Run regardless of success/failure.
       - name: Resume n8n workflow
         if: always()
         run: |
           if [ -n "${{ inputs.resumeUrl }}" ]; then
-            curl -X POST "${{ inputs.resumeUrl }}"
+            echo "Calling n8n resume webhook..."
+            # best-effort POST to resumeUrl. If the endpoint expects JSON, you can change the body below.
+            curl -sS -X POST "${{ inputs.resumeUrl }}" || echo "Failed to call resumeUrl"
           else
-            echo "No resumeUrl provided"
+            echo "No resumeUrl provided by n8n"
           fi
