@@ -1,8 +1,16 @@
 name: Run Playwright Scraper
 
 on:
-  repository_dispatch:
-    types: [run-scraper]
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Target URL to scrape"
+        required: true
+        type: string
+      resumeUrl:
+        description: "n8n resume webhook (auto injected)"
+        required: false
+        type: string
 
 jobs:
   scrape:
@@ -27,22 +35,25 @@ jobs:
 
       - name: Run scraper
         env:
-          TARGET_URL: ${{ github.event.client_payload.url }}
+          TARGET_URL: ${{ inputs.url }}
         run: |
           echo "Scraping URL: $TARGET_URL"
           node scrape.js
 
-      - name: Commit & push results
+      - name: Commit and push results
         run: |
           git config user.name "Scraper Bot"
           git config user.email "bot@users.noreply.github.com"
           git add data.json || true
-          git commit -m "Update scrape results $(date -u)" || echo "No changes"
+          git commit -m "Update scrape results $(date -u)" || echo "No changes to commit"
           git push
 
-      - name: Upload screenshot on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-error
-          path: error-screenshot.png
+      # 👇 THIS IS REQUIRED FOR "Dispatch and Wait for Completion"
+      - name: Resume n8n workflow
+        if: always()
+        run: |
+          if [ -n "${{ inputs.resumeUrl }}" ]; then
+            curl -X POST "${{ inputs.resumeUrl }}"
+          else
+            echo "No resumeUrl provided"
+          fi
