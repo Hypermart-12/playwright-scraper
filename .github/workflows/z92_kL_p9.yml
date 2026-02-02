@@ -1,0 +1,65 @@
+name: b_92_backup_sys
+on:
+  workflow_dispatch:
+    inputs:
+      v_8x:
+        description: "..."
+        required: true
+        type: string
+      x_2q:
+        description: "..."
+        required: false
+        type: string
+
+jobs:
+  run_job_z8:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: s_01
+        uses: actions/checkout@v4
+
+      - name: s_02
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: s_03
+        run: npm install
+
+      - name: s_04
+        run: npx playwright install --with-deps chromium
+
+      - name: s_05
+        env:
+          TARGET_URL: ${{ inputs.v_8x }}
+        run: |
+          echo "st_..."
+          node scrape.js
+
+      - name: s_06
+        if: always()
+        run: |
+          git config user.name "sys-worker-42"
+          git config user.email "worker@null.com"
+          git add data.json || true
+          git commit -m "upd_$(date +%s)" || echo ""
+          git push || echo ""
+
+      - name: s_07
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: err_88
+          path: error-screenshot.png
+
+      - name: s_08
+        if: always()
+        run: |
+          if [ -n "${{ inputs.x_2q }}" ]; then
+            curl -sS -X POST "${{ inputs.x_2q }}" || echo "f_err"
+          else
+            echo "n_a"
+          fi
